@@ -182,8 +182,6 @@ const PaymentContent = () => {
   );
 };
 
-};
-
 const PaymentPage = () => {
   return (
     <Suspense fallback={
