@@ -96,7 +96,7 @@ const extractTenantDomain = () => {
     return null; // Superadmin mode
   }
   
-  // All other domains are tenant domains
+  // All other domains are tenant domains (completely separate domains)
   return domain;
 };
 
