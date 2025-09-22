@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { Elements } from '@stripe/react-stripe-js';
 import { useRouter, useSearchParams } from 'next/navigation';
 import getStripe from '../../../lib/stripe';
@@ -8,7 +8,7 @@ import { toast } from 'react-hot-toast';
 import { useDashboard } from '@/contexts/DashboardContext';
 import axios from 'axios';
 
-const PaymentPage = () => {
+const PaymentContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const appointmentId = searchParams.get('appointmentId');
@@ -179,6 +179,20 @@ const PaymentPage = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+};
+
+const PaymentPage = () => {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-green-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+      </div>
+    }>
+      <PaymentContent />
+    </Suspense>
   );
 };
 

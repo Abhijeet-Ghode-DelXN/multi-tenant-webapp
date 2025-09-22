@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Settings, Palette, Mail, CreditCard, Tool, Save, UploadCloud, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Settings, Palette, Mail, CreditCard, Wrench, Save, UploadCloud, ToggleLeft, ToggleRight } from 'lucide-react';
 
 // Placeholder initial settings - in a real app, fetch these from an API
 const initialGlobalSettings = {
@@ -210,7 +210,7 @@ export default function GlobalSettingsPage() {
         </button>
       </SettingSection>
 
-      <SettingSection title="Maintenance Mode" icon={Tool}>
+      <SettingSection title="Maintenance Mode" icon={Wrench}>
         <ToggleField 
             label="Enable Maintenance Mode"
             name="maintenanceMode"
