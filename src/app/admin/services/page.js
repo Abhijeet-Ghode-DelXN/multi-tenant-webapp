@@ -500,7 +500,7 @@ const ServicesPage = () => {
   ];
 
   useEffect(() => {
-    if ((!userLoading && userData) && (!tenantLoading && tenant)) {
+    if (!userLoading && userData && !tenantLoading) {
       fetchServices();
     }
   }, [currentPage, selectedCategory, sortField, sortDirection, searchTerm, userData, userLoading, tenant, tenantLoading]);
@@ -522,7 +522,8 @@ const ServicesPage = () => {
         throw new Error('User authentication required');
       }
       
-      if (!tenant?._id) {
+      // Allow superadmin mode without tenant context
+      if (!tenant?._id && userData.role !== 'superAdmin') {
         throw new Error('Tenant context is required');
       }
 
@@ -532,12 +533,23 @@ const ServicesPage = () => {
         sort: `${sortDirection === 'asc' ? '' : '-'}${sortField}`
       };
 
+      const headers = {
+        Authorization: `Bearer ${userData.token}`,
+      };
+      
+      // Add tenant headers only if tenant exists
+      if (tenant?.subdomain) {
+        headers['X-Tenant-Subdomain'] = tenant.subdomain;
+      }
+      
+      // For superadmin, request all tenants' services
+      if (userData.role === 'superAdmin' && !tenant) {
+        headers['x-all-tenants'] = 'true';
+      }
+
       const response = await axios.get(`${API_URL}/services`, {
         params,
-        headers: {
-          Authorization: `Bearer ${userData.token}`,
-          'X-Tenant-Subdomain': tenant.subdomain,
-        },
+        headers,
       });
       
       setServices(response.data?.data || []);
@@ -570,11 +582,16 @@ const ServicesPage = () => {
       setShowPopup(false);
       
       // First fetch the service to verify ownership
+      const headers = {
+        Authorization: `Bearer ${userData?.token}`,
+      };
+      
+      if (tenant?.subdomain) {
+        headers['X-Tenant-Subdomain'] = tenant.subdomain;
+      }
+      
       const serviceResponse = await axios.get(`${API_URL}/services/${serviceToDelete}`, {
-        headers: {
-          Authorization: `Bearer ${userData?.token}`,
-          'X-Tenant-Subdomain': tenant?.subdomain,
-        },
+        headers,
       });
 
       const service = serviceResponse.data.data;
@@ -587,11 +604,16 @@ const ServicesPage = () => {
       }
 
       // Proceed with deletion
+      const deleteHeaders = {
+        Authorization: `Bearer ${userData?.token}`,
+      };
+      
+      if (tenant?.subdomain) {
+        deleteHeaders['X-Tenant-Subdomain'] = tenant.subdomain;
+      }
+      
       await axios.delete(`${API_URL}/services/${serviceToDelete}`, {
-        headers: {
-          Authorization: `Bearer ${userData?.token}`,
-          'X-Tenant-Subdomain': tenant?.subdomain,
-        },
+        headers: deleteHeaders,
       });
       
       fetchServices();

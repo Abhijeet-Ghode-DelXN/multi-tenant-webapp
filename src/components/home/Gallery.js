@@ -340,14 +340,14 @@ const Portfolio = () => {
       try {
         setLoading(true);
         
-        // Prepare headers - only send tenant subdomain if we're on a tenant site
+        // Prepare headers - only send tenant domain if we're on a tenant site
         const headers = {};
         if (tenant?.subdomain) {
-          headers['X-Tenant-Subdomain'] = tenant.subdomain;
+          headers['X-Tenant-Domain'] = tenant.subdomain;
         }
         
-        // Use a different endpoint for all portfolios when no tenant
-        const endpoint = tenant?.subdomain ? '/portfolio' : '/portfolio/all';
+        // Use the public endpoint for tenant portfolios
+        const endpoint = tenant?.subdomain ? '/portfolio/public' : '/portfolio/all';
         
         const response = await axios.get(`${API_URL}${endpoint}`, { headers });
         

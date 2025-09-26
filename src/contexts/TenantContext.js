@@ -34,8 +34,16 @@ export const TenantProvider = ({ children }) => {
     }
 
     // Handle production - superadmin domain
-    if (domain === 'www.landscape360.com' || domain === 'landscape360.com') {
+    if (domain === 'www.landscape360.com' || domain === 'landscape360.com' || 
+        domain === 'delxn.club' || domain === 'www.delxn.club') {
       return null; // Superadmin mode
+    }
+
+    // Handle computer name domains (development)
+    if (domain.includes('-') && !domain.includes('.')) {
+      // This is likely a computer name like 'isaac-gomes-ernandes'
+      // For development, treat this as a tenant subdomain
+      return domain; // Use the computer name as tenant subdomain
     }
 
     // All other domains are tenant domains
@@ -105,7 +113,7 @@ export const TenantProvider = ({ children }) => {
     return axios.create({
       baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
       headers: {
-        'X-Tenant-Domain': tenant.subdomain,
+        'X-Tenant-Subdomain': tenant.subdomain,
       },
     });
   };
@@ -118,7 +126,7 @@ export const TenantProvider = ({ children }) => {
     if (userData.role === 'superAdmin') return true;
     
     // Check if user belongs to this tenant
-    return userData.tenantId === tenant._id;
+    return userData.tenantId?._id === tenant._id || userData.tenantId === tenant._id;
   };
 
   const value = {

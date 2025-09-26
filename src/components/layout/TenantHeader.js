@@ -1223,7 +1223,7 @@ export default function TenantHeader() {
             <div className="flex items-center space-x-4">
               <div>
                 <h1 className="text-xl font-bold text-gray-900">
-                  Landscaping Services
+                  {tenantConfig?.name || 'Business Name'}
                 </h1>
               </div>
             </div>
@@ -1338,7 +1338,7 @@ export default function TenantHeader() {
             )}
             <div>
               <h1 className="text-xl font-bold text-gray-900">
-                {tenantConfig?.name || 'Landscaping Services'}
+                {tenantConfig?.name || 'Business Name'}
               </h1>
               {tenantConfig?.businessPhone && (
                 <p className="text-sm text-gray-500">

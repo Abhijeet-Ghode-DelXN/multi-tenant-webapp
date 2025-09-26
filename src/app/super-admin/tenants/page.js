@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { PlusCircle, Eye, Edit3, Trash2, ToggleLeft, ToggleRight, Search, ChevronDown, ChevronUp } from 'lucide-react';
+import { PlusCircle, Eye, Edit3, Trash2, ToggleLeft, ToggleRight, Search, ChevronDown, ChevronUp, CreditCard, DollarSign } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import apiClient from '../../../lib/api/apiClient';
 
@@ -25,6 +25,8 @@ export default function TenantManagementPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [planFilter, setPlanFilter] = useState('all');
   const [sortConfig, setSortConfig] = useState({ key: 'createdAt', direction: 'descending' });
   const [deleteModal, setDeleteModal] = useState({ open: false, tenant: null, input: '' });
   const router = useRouter();
@@ -79,11 +81,16 @@ export default function TenantManagementPage() {
     return sortableItems;
   }, [tenants, sortConfig]);
 
-  const filteredTenants = sortedTenants.filter(tenant => 
-    tenant.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    tenant.subdomain?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    tenant.owner?.name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredTenants = sortedTenants.filter(tenant => {
+    const matchesSearch = tenant.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      tenant.subdomain?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      tenant.owner?.name?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || tenant.subscription?.status === statusFilter;
+    const matchesPlan = planFilter === 'all' || tenant.subscription?.plan === planFilter;
+    
+    return matchesSearch && matchesStatus && matchesPlan;
+  });
 
   const handleSuspendTenant = async (tenantId) => {
     try {
@@ -100,6 +107,23 @@ export default function TenantManagementPage() {
     } catch (error) {
       console.error('❌ Error updating tenant status:', error);
       alert('Failed to update tenant status');
+    }
+  };
+
+  const handlePlanChange = async (tenantId, newPlan) => {
+    try {
+      await apiClient.put(`/super-admin/tenants/${tenantId}`, {
+        subscription: { plan: newPlan }
+      });
+      
+      setTenants(tenants.map(t => 
+        t._id === tenantId 
+          ? { ...t, subscription: { ...t.subscription, plan: newPlan } }
+          : t
+      ));
+    } catch (error) {
+      console.error('❌ Error updating subscription plan:', error);
+      alert('Failed to update subscription plan');
     }
   };
 
@@ -179,39 +203,43 @@ export default function TenantManagementPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white">Tenant Management</h1>
         <div className="flex flex-col sm:flex-row gap-3 w-full">
-  <div className="relative flex-grow">
-    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-      <Search className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+  <div className="flex gap-3 flex-grow">
+    <div className="relative flex-grow">
+      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <Search className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+      </div>
+      <input
+        type="text"
+        placeholder="Search tenants..."
+        className="block w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+      />
     </div>
-    <input
-      type="text"
-      placeholder="Search tenants by name, subdomain or owner..."
-      className="block w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-      value={searchTerm}
-      onChange={(e) => setSearchTerm(e.target.value)}
-      aria-label="Search tenants"
-    />
-    {searchTerm && (
-      <button
-        onClick={() => setSearchTerm('')}
-        className="absolute inset-y-0 right-0 pr-3 flex items-center"
-        aria-label="Clear search"
-      >
-        <svg
-          className="h-5 w-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M6 18L18 6M6 6l12 12"
-          />
-        </svg>
-      </button>
-    )}
+    
+    <select
+      value={statusFilter}
+      onChange={(e) => setStatusFilter(e.target.value)}
+      className="px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+    >
+      <option value="all">All Status</option>
+      <option value="active">Active</option>
+      <option value="inactive">Inactive</option>
+      <option value="suspended">Suspended</option>
+      <option value="trialing">Trialing</option>
+    </select>
+    
+    <select
+      value={planFilter}
+      onChange={(e) => setPlanFilter(e.target.value)}
+      className="px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+    >
+      <option value="all">All Plans</option>
+      <option value="basic">Basic</option>
+      <option value="premium">Premium</option>
+      <option value="enterprise">Enterprise</option>
+      <option value="none">No Plan</option>
+    </select>
   </div>
   
   <Link
@@ -223,6 +251,54 @@ export default function TenantManagementPage() {
     <span className="sm:hidden whitespace-nowrap">Create</span>
   </Link>
 </div>
+      </div>
+
+      {/* Subscription Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+          <div className="flex items-center">
+            <DollarSign className="h-8 w-8 text-green-500 mr-3" />
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Active Subscriptions</p>
+              <p className="text-xl font-semibold text-gray-900 dark:text-white">
+                {filteredTenants.filter(t => t.subscription?.status === 'active').length}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+          <div className="flex items-center">
+            <CreditCard className="h-8 w-8 text-blue-500 mr-3" />
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Premium Plans</p>
+              <p className="text-xl font-semibold text-gray-900 dark:text-white">
+                {filteredTenants.filter(t => t.subscription?.plan === 'premium').length}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+          <div className="flex items-center">
+            <ToggleLeft className="h-8 w-8 text-yellow-500 mr-3" />
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Trialing</p>
+              <p className="text-xl font-semibold text-gray-900 dark:text-white">
+                {filteredTenants.filter(t => t.subscription?.status === 'trialing').length}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+          <div className="flex items-center">
+            <Trash2 className="h-8 w-8 text-red-500 mr-3" />
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Suspended</p>
+              <p className="text-xl font-semibold text-gray-900 dark:text-white">
+                {filteredTenants.filter(t => t.subscription?.status === 'suspended').length}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow overflow-hidden">
@@ -259,6 +335,9 @@ export default function TenantManagementPage() {
                     Status
                     {getSortIcon('subscription.status')}
                   </div>
+                </th>
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  Plan
                 </th>
                 <th 
                   scope="col" 
@@ -322,6 +401,18 @@ export default function TenantManagementPage() {
                     <td className="px-4 py-4 whitespace-nowrap text-sm">
                       <StatusBadge status={tenant.subscription?.status} />
                     </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm">
+                      <select
+                        value={tenant.subscription?.plan || 'basic'}
+                        onChange={(e) => handlePlanChange(tenant._id, e.target.value)}
+                        className="text-xs border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-green-500"
+                      >
+                        <option value="basic">Basic</option>
+                        <option value="premium">Premium</option>
+                        <option value="enterprise">Enterprise</option>
+                        <option value="none">No Plan</option>
+                      </select>
+                    </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                       {tenant.owner?.name || 'N/A'}
                     </td>
@@ -356,6 +447,13 @@ export default function TenantManagementPage() {
                           )}
                         </button>
                         <button
+                          onClick={() => router.push(`/super-admin/billing/${tenant._id}`)}
+                          className="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 p-1 rounded-full hover:bg-green-50 dark:hover:bg-green-900/30"
+                          title="Billing"
+                        >
+                          <CreditCard size={18} />
+                        </button>
+                        <button
                           onClick={() => setDeleteModal({ open: true, tenant, input: '' })}
                           className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/30"
                           title="Delete"
@@ -368,7 +466,7 @@ export default function TenantManagementPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="6" className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                  <td colSpan="7" className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                     No tenants found {searchTerm && `matching "${searchTerm}"`}
                   </td>
                 </tr>

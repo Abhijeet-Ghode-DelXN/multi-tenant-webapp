@@ -82,7 +82,7 @@ export const testimonials = [
     image: "/images/testimonial-3.jpg"
   },
    {
-    id: 3,
+    id: 4,
     name: "Jacob S.",
     // role: "Homeowner",
     comment: "My garden was struggling with multiple dead plants and poor design. The dead plants weren’t just replaced— the garden layout was thoughtfully redesigned, with fresh, vibrant flowers and plants that beautifully complemented each other. The garden now looks stunning, and I couldn’t be happier. Highly recommend the services!",
